@@ -1,5 +1,6 @@
 import socket
 import sys
+from termcolor import colored, cprint
 import _thread
 import traceback
 import ssl
