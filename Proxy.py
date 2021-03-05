@@ -14,14 +14,14 @@ def Proxy():
     max_conn = 10000
 
     try:
-        print("[DG] Initializing Socket.")
+        print("[#] Initializing Socket.")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("", listen_port))
         s.listen(max_conn)
-        print("[DG] Done.")
-        print("[DG] Socket has been binded successfully...")
-        print("[DG] Server working on: [{}]".format(listen_port))
+        print("[#] Done.")
+        print("[#] Socket has been binded successfully...")
+        print("[#] Server working on: [{}]".format(listen_port))
 
     except Exception as e:
         print(e)
