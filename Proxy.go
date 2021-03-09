@@ -27,9 +27,9 @@ func addSite2Cache(res *http.Response, siteResponse []byte) *website {
 	site := website{headers: make(map[string]string, 0), body: siteResponse}
 	site.timeFetched = time.Now()
 
-	for k, v := range res.Header {
-		for _, vv := range v {
-			site.headers[k] = vv
+	for k, i := range res.Header {
+		for _, y := range i {
+			site.headers[k] = y
 		}
 	}
 	return &site
