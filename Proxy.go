@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/TwinProduction/go-color"
 )
 
 const CACHE_DURATION = 5000000000 // 5 seconds in nanoseconds
@@ -39,20 +41,19 @@ func add2Blacklist(site string) {
 	_, blocked := blacklist[site]
 	if !blocked {
 		blacklist[site] = true
-		fmt.Printf("%s\n", site)
-		// fmt.Printf("%s Blacklisted\n", site)
+		fmt.Printf(color.Ize(color.Green, "Blacklisted\n"))
 	} else {
-		fmt.Printf("Sites already blocked lad")
+		fmt.Println(color.Ize(color.Yellow, "This site is already on the blacklist"))
 	}
 }
 
 func RmvFromBlacklist(site string) {
 	_, blocked := blacklist[site]
 	if !blocked {
-		fmt.Println("Site is not blocked lad")
+		fmt.Println(color.Ize(color.Yellow, "Site is not blocked lad"))
 	} else {
 		delete(blacklist, site)
-		fmt.Printf("%s has been removed from the blacklist\n", site)
+		fmt.Println(color.Ize(color.Green, "Removed from blacklist"))
 	}
 }
 
@@ -82,27 +83,25 @@ func cached(site string) bool {
 
 func userInput() {
 	Scanner := bufio.NewReader(os.Stdin)
-	fmt.Println("|--------------------------------|")
-	fmt.Println("| Dans Web Proxy Console Bro ;-) |")
-	fmt.Println("|--------------------------------|")
+	fmt.Println(color.Ize(color.Cyan, "|--------------------------------|"))
+	fmt.Println(color.Ize(color.Cyan, "| Dans Web Proxy Console Bro ;-) |"))
+	fmt.Println(color.Ize(color.Cyan, "|--------------------------------|"))
 
 	for 1 < 2 {
-		fmt.Print(">> ")
+		fmt.Print(color.Ize(color.Blue, ">> "))
 		input, _ := Scanner.ReadString('\n')
 		input = strings.Replace(input, "\n", "", -1)
 
-		fmt.Printf("%s\n", input)
-
 		if strings.Contains(input, "/add") {
-			site := input[4:]
+			site := input[5:]
 			add2Blacklist(site)
 		} else if strings.Contains(input, "/rmv") {
-			site := input[4:]
+			site := input[5:]
 			RmvFromBlacklist(site)
 		} else if strings.Contains(input, "/view") {
-			fmt.Println("Blacklist:")
+			fmt.Println(color.Ize(color.Bold, "Blacklist:"))
 			for i := range blacklist {
-				fmt.Printf("| %s\n", i)
+				println(color.Ize(color.Purple, fmt.Sprintf("| %s", i)))
 			}
 		}
 	}
@@ -110,5 +109,4 @@ func userInput() {
 
 func main() {
 	userInput()
-
 }
