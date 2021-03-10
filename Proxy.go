@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -24,7 +25,6 @@ type website struct {
 func addSite2Cache(res *http.Response, siteResponse []byte) *website {
 	site := website{headers: make(map[string]string, 0), body: siteResponse}
 	site.timeFetched = time.Now()
-
 	for k, i := range res.Header {
 		for _, y := range i {
 			site.headers[k] = y
@@ -35,7 +35,6 @@ func addSite2Cache(res *http.Response, siteResponse []byte) *website {
 
 func add2Blacklist(site string) {
 	_, blocked := blacklist[site]
-
 	if !blocked {
 		blacklist[site] = true
 		fmt.Printf("Added %s to Blacklist\n", site)
@@ -46,11 +45,24 @@ func add2Blacklist(site string) {
 
 func RmvFromBlacklist(site string) {
 	_, blocked := blacklist[site]
-
 	if !blocked {
 		fmt.Println("Site is not blocked lad")
 	} else {
 		delete(blacklist, site)
 		fmt.Printf("%s has been removed from the blacklist", site)
 	}
+}
+
+func isBlocked(site string) bool {
+	dots := twoDots.FindAllStringIndex(site, -1)
+	if len(dots) > 1 {
+		subIndex := dots[len(dots)-2]
+		site = site[subIndex[0]+1:]
+	}
+	port := strings.Index(site, ":")
+	if port > -1 {
+		site = site[:port]
+	}
+	_, blocked := blacklist[site]
+	return blocked
 }
