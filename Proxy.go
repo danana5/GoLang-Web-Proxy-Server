@@ -53,7 +53,7 @@ func RmvFromBlacklist(site string) {
 	}
 }
 
-func isBlocked(site string) bool {
+func blacklisted(site string) bool {
 	dots := twoDots.FindAllStringIndex(site, -1)
 	if len(dots) > 1 {
 		subIndex := dots[len(dots)-2]
