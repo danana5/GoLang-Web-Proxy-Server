@@ -7,13 +7,11 @@ import (
 	"time"
 )
 
-const cacheTime = 10
+const CACHE_DURATION = 5
 
 var twoDots = regexp.MustCompile("\\.")
-
-var blacklist = map[string]bool{}
-var cache = map[string]*website{}
-
+var blacklist = map[string]bool{} // Blacklist is a map with the URL's as the key and a boolean as the value
+var cache = map[string]*website{} // Cache is a map of the URL's as the keys and then the values are the website structs storing the information about the websites
 var webTimes = make(map[string]time.Duration, 0)
 var cachetimes = make(map[string]time.Duration, 0)
 
@@ -35,13 +33,24 @@ func addSite2Cache(res *http.Response, siteResponse []byte) *website {
 	return &site
 }
 
-func addSite2Blacklist(site string) {
-	_, exists := blacklist[site]
+func add2Blacklist(site string) {
+	_, blocked := blacklist[site]
 
-	if !exists {
+	if !blocked {
 		blacklist[site] = true
 		fmt.Printf("Added %s to Blacklist\n", site)
 	} else {
-		fmt.Println("Sites already blocked lad")
+		fmt.Printf("Sites already blocked lad")
+	}
+}
+
+func RmvFromBlacklist(site string) {
+	_, blocked := blacklist[site]
+
+	if !blocked {
+		fmt.Println("Site is not blocked lad")
+	} else {
+		delete(blacklist, site)
+		fmt.Printf("%s has been removed from the blacklist", site)
 	}
 }
