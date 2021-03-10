@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const CACHE_DURATION = 5
+const CACHE_DURATION = 5000000000 // 5 seconds in nanoseconds
 
 var twoDots = regexp.MustCompile("\\.")
 var blacklist = map[string]bool{} // Blacklist is a map with the URL's as the key and a boolean as the value
@@ -65,4 +65,14 @@ func blacklisted(site string) bool {
 	}
 	_, blocked := blacklist[site]
 	return blocked
+}
+
+func cached(site string) bool {
+	website, x := cache[site]
+	if x && website != nil && int64(time.Since(website.timeFetched)) < CACHE_DURATION {
+		return true
+	} else {
+		delete(cache, site)
+		return false
+	}
 }
