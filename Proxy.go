@@ -3,6 +3,9 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -83,9 +86,9 @@ func cached(site string) bool {
 
 func userInput() {
 	Scanner := bufio.NewReader(os.Stdin)
-	fmt.Println(color.Ize(color.Cyan, "|--------------------------------|"))
-	fmt.Println(color.Ize(color.Cyan, "| Dans Web Proxy Console Bro ;-) |"))
-	fmt.Println(color.Ize(color.Cyan, "|--------------------------------|"))
+	fmt.Println(color.Ize(color.Cyan, "|-------------------------------|"))
+	fmt.Println(color.Ize(color.Cyan, "| Dans Web Proxy Console Bro ;) |"))
+	fmt.Println(color.Ize(color.Cyan, "|-------------------------------|"))
 
 	for 1 < 2 {
 		fmt.Print(color.Ize(color.Blue, ">> "))
@@ -105,6 +108,31 @@ func userInput() {
 			}
 		}
 	}
+}
+
+func HTTPHandler(site http.ResponseWriter, req *http.Request) {
+	client := &http.Client{}
+	res, e := client.Do(req)
+
+	if e != nil {
+		log.Panic(e)
+	}
+
+	for i, y := range res.Header {
+		for _, z := range y {
+			site.Header().Set(i, z)
+		}
+	}
+
+	bodyBytes, e := ioutil.ReadAll(res.Body)
+	if e != nil {
+		log.Panic(e)
+	}
+
+	io.WriteString(site, string(bodyBytes))
+	cache[res.Request.URL.String()] = add2Cache(res, bodyBytes)
+	req.Body.Close()
+	res.Body.Close()
 }
 
 func main() {
