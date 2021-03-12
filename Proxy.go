@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"regexp"
@@ -110,9 +111,9 @@ func userInput() {
 	}
 }
 
-func HTTPHandler(site http.ResponseWriter, req *http.Request) {
+func HTTPHandler(writer http.ResponseWriter, request *http.Request) {
 	client := &http.Client{}
-	res, e := client.Do(req)
+	res, e := client.Do(request)
 
 	if e != nil {
 		log.Panic(e)
@@ -120,7 +121,7 @@ func HTTPHandler(site http.ResponseWriter, req *http.Request) {
 
 	for i, y := range res.Header {
 		for _, z := range y {
-			site.Header().Set(i, z)
+			writer.Header().Set(i, z)
 		}
 	}
 
@@ -129,10 +130,35 @@ func HTTPHandler(site http.ResponseWriter, req *http.Request) {
 		log.Panic(e)
 	}
 
-	io.WriteString(site, string(bodyBytes))
+	io.WriteString(writer, string(bodyBytes))
 	cache[res.Request.URL.String()] = add2Cache(res, bodyBytes)
-	req.Body.Close()
+	request.Body.Close()
 	res.Body.Close()
+}
+
+func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
+	time := time.Second * 10
+	dest, e := net.DialTimeout("tcp", request.Host, time)
+
+	if e != nil {
+		http.Error(writer, e.Error(), http.StatusServiceUnavailable)
+		log.Println(e)
+		return
+	}
+
+	writer.WriteHeader(http.StatusOK)
+
+	hijack, t := writer.(http.Hijacker)
+	if !t {
+		http.Error(writer, "Hijacking is not supported", http.StatusInternalServerError)
+		log.Println("Hijacking is not supported", e)
+		return
+	}
+	client, _, e := hijack.Hijack()
+	if e != nil {
+		http.Error(writer, e.Error(), http.StatusServiceUnavailable)
+	}
+
 }
 
 func main() {
