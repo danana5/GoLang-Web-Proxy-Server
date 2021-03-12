@@ -43,6 +43,7 @@ func add2Cache(res *http.Response, siteResponse []byte) *website {
 
 func add2Blacklist(site string) {
 	_, blocked := blacklist[site]
+	fmt.Println("|", site)
 	if !blocked {
 		blacklist[site] = true
 		fmt.Printf(color.Ize(color.Green, "Blacklisted\n"))
@@ -61,11 +62,15 @@ func RmvFromBlacklist(site string) {
 	}
 }
 
+// Blacklisted
+// Checks if URL is on blacklist including all subdomains on that URL
+// Arguments: URL of Site
+// Returns: Boolean
 func blacklisted(site string) bool {
 	dots := twoDots.FindAllStringIndex(site, -1)
 	if len(dots) > 1 {
-		subIndex := dots[len(dots)-2]
-		site = site[subIndex[0]+1:]
+		sub := dots[len(dots)-2]
+		site = site[sub[0]+1:]
 	}
 	port := strings.Index(site, ":")
 	if port > -1 {
@@ -175,6 +180,35 @@ func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 
 }
 
+func mainHandler(writer http.ResponseWriter, request *http.Request) {
+	request.RequestURI = ""
+	url := request.URL.String()
+	host := request.Host
+
+	if !blacklisted(host) {
+		cached := cached(url)
+		if http.MethodConnect == request.Method {
+			HTTPSHandler(writer, request)
+		} else {
+			if cached {
+				site := cache[url]
+				for i, y := range site.headers {
+					writer.Header().Set(i, y)
+				}
+				io.WriteString(writer, string(site.body))
+			} else {
+				HTTPHandler(writer, request)
+			}
+		}
+	} else {
+		log.Println("This Site is BLOCKED!")
+		writer.WriteHeader(http.StatusForbidden)
+	}
+}
+
 func main() {
-	userInput()
+	go userInput()
+
+	handler := http.HandlerFunc(mainHandler)
+	http.ListenAndServe(":8080", handler)
 }
