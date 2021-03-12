@@ -43,7 +43,6 @@ func add2Cache(res *http.Response, siteResponse []byte) *website {
 
 func add2Blacklist(site string) {
 	_, blocked := blacklist[site]
-	fmt.Println("|", site)
 	if !blocked {
 		blacklist[site] = true
 		fmt.Printf(color.Ize(color.Green, "Blacklisted\n"))
@@ -99,7 +98,7 @@ func userInput() {
 	for 1 < 2 {
 		fmt.Print(color.Ize(color.Blue, ">> "))
 		input, _ := Scanner.ReadString('\n')
-		input = strings.Replace(input, "\n", "", -1)
+		input = input[:len(input)-2]
 
 		if strings.Contains(input, "/add") {
 			site := input[5:]
@@ -201,7 +200,7 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 			}
 		}
 	} else {
-		log.Println("This Site is BLOCKED!")
+		log.Println(color.Ize(color.Red, "This Site is BLOCKED!"))
 		writer.WriteHeader(http.StatusForbidden)
 	}
 }
