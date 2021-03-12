@@ -205,8 +205,19 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
+func cacheCleaner() {
+	for 1 < 2 {
+		for i, y := range cache {
+			if int64(time.Since(y.timeFetched)) > CACHE_DURATION {
+				delete(cache, i)
+			}
+		}
+	}
+}
+
 func main() {
 	go userInput()
+	go cacheCleaner()
 
 	handler := http.HandlerFunc(mainHandler)
 	http.ListenAndServe(":8080", handler)
