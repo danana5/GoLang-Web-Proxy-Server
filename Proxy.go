@@ -159,6 +159,9 @@ func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 		http.Error(writer, e.Error(), http.StatusServiceUnavailable)
 	}
 
+	destTCP, dOK := dest.(*net.TCPConn)
+	clientTCP, cOK := client.(*net.TCPConn)
+
 }
 
 func main() {
