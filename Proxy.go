@@ -136,6 +136,12 @@ func HTTPHandler(writer http.ResponseWriter, request *http.Request) {
 	res.Body.Close()
 }
 
+func copyTCP(client *net.TCPConn, conn *net.TCPConn) {
+	io.Copy(client, conn)
+	client.Close()
+	conn.Close()
+}
+
 func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 	time := time.Second * 10
 	dest, e := net.DialTimeout("tcp", request.Host, time)
