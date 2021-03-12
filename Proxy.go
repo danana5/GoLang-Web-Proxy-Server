@@ -168,6 +168,11 @@ func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 	destTCP, dOK := dest.(*net.TCPConn)
 	clientTCP, cOK := client.(*net.TCPConn)
 
+	if dOK && cOK {
+		go copyTCP(destTCP, clientTCP)
+		go copyTCP(clientTCP, destTCP)
+	}
+
 }
 
 func main() {
