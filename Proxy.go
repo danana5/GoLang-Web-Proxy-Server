@@ -16,7 +16,7 @@ import (
 	"github.com/TwinProduction/go-color"
 )
 
-const CACHE_DURATION = 5000000000 // 5 seconds in nanoseconds
+const CACHE_DURATION = 20000000000 // 20 seconds in nanoseconds
 
 type website struct {
 	headers     map[string]string
@@ -107,9 +107,30 @@ func userInput() {
 			site := input[5:]
 			RmvFromBlacklist(site)
 		} else if strings.Contains(input, "/view") {
-			fmt.Println(color.Ize(color.Bold, "Blacklist:"))
+			fmt.Println(color.Ize(color.Purple, "Blacklist:"))
 			for i := range blacklist {
 				println(color.Ize(color.Purple, fmt.Sprintf("| %s", i)))
+			}
+		} else if strings.Contains(input, "/cash") {
+			savedTimeURL := make([]int64, 0)
+
+			for i, y := range cachetimes {
+				sv := int64(webTimes[i]/time.Millisecond) - int64(y/time.Millisecond)
+				savedTimeURL = append(savedTimeURL, int64(sv))
+			}
+
+			if len(cachetimes) > 0 {
+				average := int64(0)
+
+				for _, y := range savedTimeURL {
+					average = average + int64(y)
+				}
+
+				average = average / int64(len(savedTimeURL))
+				fmt.Printf(color.Cyan, "Average time saved from caching: %dms", average)
+				fmt.Println(color.Reset)
+			} else if len(cache) == 0 {
+				fmt.Println(color.Ize(color.Yellow, "Cache is Empty"))
 			}
 		}
 	}
@@ -161,7 +182,7 @@ func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 	hijack, t := writer.(http.Hijacker)
 	if !t {
 		http.Error(writer, "Hijacking is not supported", http.StatusInternalServerError)
-		log.Println("Hijacking is not supported", e)
+		log.Println(color.Ize(color.Red, "Hijacking is not supported"))
 		return
 	}
 	client, _, e := hijack.Hijack()
