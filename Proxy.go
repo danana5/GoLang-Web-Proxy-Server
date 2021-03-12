@@ -219,7 +219,6 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 		log.Print(color.Ize(color.Green, "ALLOWED"))
 		cached := cached(url)
 		timer := time.Now()
-		fmt.Println(timer)
 		if http.MethodConnect == request.Method {
 			HTTPSHandler(writer, request)
 		} else {
