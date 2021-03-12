@@ -11,6 +11,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/TwinProduction/go-color"
@@ -24,13 +25,14 @@ type website struct {
 	timeFetched time.Time
 }
 
+var mutex = &sync.RWMutex{}
 var twoDots = regexp.MustCompile("\\.")
 var blacklist = map[string]bool{} // Blacklist is a map with the URL's as the key and a boolean as the value
 var cache = map[string]*website{} // Cache is a map of the URL's as the keys and then the values are the website structs storing the information about the websites
 var webTimes = make(map[string]time.Duration, 0)
 var cachetimes = make(map[string]time.Duration, 0)
 
-func add2Cache(res *http.Response, siteResponse []byte) *website {
+func newSite(res *http.Response, siteResponse []byte) *website {
 	site := website{headers: make(map[string]string, 0), body: siteResponse}
 	site.timeFetched = time.Now()
 	for k, i := range res.Header {
@@ -80,11 +82,15 @@ func blacklisted(site string) bool {
 }
 
 func cached(site string) bool {
+	mutex.RLock()
 	website, x := cache[site]
+	mutex.RUnlock()
 	if x && website != nil && int64(time.Since(website.timeFetched)) < CACHE_DURATION {
 		return true
 	} else {
+		mutex.Lock()
 		delete(cache, site)
+		mutex.Unlock()
 		return false
 	}
 }
@@ -118,7 +124,6 @@ func userInput() {
 				sv := int64(webTimes[i]/time.Millisecond) - int64(y/time.Millisecond)
 				savedTimeURL = append(savedTimeURL, int64(sv))
 			}
-
 			if len(cachetimes) > 0 {
 				average := int64(0)
 
@@ -156,7 +161,9 @@ func HTTPHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	io.WriteString(writer, string(bodyBytes))
-	cache[res.Request.URL.String()] = add2Cache(res, bodyBytes)
+	mutex.Lock()
+	cache[res.Request.URL.String()] = newSite(res, bodyBytes)
+	mutex.Unlock()
 	request.Body.Close()
 	res.Body.Close()
 }
@@ -211,7 +218,9 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 			HTTPSHandler(writer, request)
 		} else {
 			if cached {
+				mutex.RLock()
 				site := cache[url]
+				mutex.RUnlock()
 				for i, y := range site.headers {
 					writer.Header().Set(i, y)
 				}
@@ -228,11 +237,15 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 
 func cacheCleaner() {
 	for 1 < 2 {
+		mutex.RLock()
 		for i, y := range cache {
 			if int64(time.Since(y.timeFetched)) > CACHE_DURATION {
+				mutex.Lock()
 				delete(cache, i)
+				mutex.Unlock()
 			}
 		}
+		mutex.RUnlock()
 	}
 }
 
