@@ -117,24 +117,27 @@ func userInput() {
 			for i := range blacklist {
 				println(color.Ize(color.Purple, fmt.Sprintf("| %s", i)))
 			}
-		} else if strings.Contains(input, "/cash") {
+		} else if strings.Contains(input, "/c") {
 			savedTimeURL := make([]int64, 0)
 
 			for i, y := range cachetimes {
 				sv := int64(webTimes[i]/time.Millisecond) - int64(y/time.Millisecond)
 				savedTimeURL = append(savedTimeURL, int64(sv))
 			}
+			mutex.RLock()
+			length := len(cache)
+			mutex.RUnlock()
 			if len(cachetimes) > 0 {
 				average := int64(0)
 
 				for _, y := range savedTimeURL {
 					average = average + int64(y)
 				}
-
 				average = average / int64(len(savedTimeURL))
-				fmt.Printf(color.Cyan, "Average time saved from caching: %dms", average)
-				fmt.Println(color.Reset)
-			} else if len(cache) == 0 {
+				fmt.Print(color.Cyan)
+				fmt.Printf("Average time saved from caching: %dms\n", average)
+				fmt.Print(color.Reset)
+			} else if length == 0 {
 				fmt.Println(color.Ize(color.Yellow, "Cache is Empty"))
 			}
 		}
@@ -213,7 +216,10 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 	host := request.Host
 
 	if !blacklisted(host) {
+		log.Print(color.Ize(color.Green, "ALLOWED"))
 		cached := cached(url)
+		timer := time.Now()
+		fmt.Println(timer)
 		if http.MethodConnect == request.Method {
 			HTTPSHandler(writer, request)
 		} else {
@@ -228,6 +234,18 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 			} else {
 				HTTPHandler(writer, request)
 			}
+		}
+		fin := time.Since(timer)
+		if cached {
+			cachetimes[url] = fin
+			fmt.Print(color.Cyan)
+			log.Printf("Taken from cache: %dms", fin.Milliseconds())
+			fmt.Print(color.Reset)
+		} else {
+			webTimes[url] = fin
+			fmt.Print(color.Yellow)
+			log.Printf("Taken from web: %dms", fin.Milliseconds())
+			fmt.Print(color.Reset)
 		}
 	} else {
 		log.Println(color.Ize(color.Red, "This Site is BLOCKED!"))
