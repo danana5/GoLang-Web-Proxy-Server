@@ -17,7 +17,7 @@ import (
 	"github.com/TwinProduction/go-color"
 )
 
-const CACHE_DURATION = 20000000000 // 20 seconds in nanoseconds
+const CACHE_DURATION = 2000000000000 // 20 seconds in nanoseconds
 
 type website struct {
 	headers     map[string]string
@@ -136,6 +136,13 @@ func userInput() {
 				average = average / int64(len(savedTimeURL))
 				fmt.Print(color.Cyan)
 				fmt.Printf("Average time saved from caching: %dms\n", average)
+
+				fmt.Println("\nCached sites:")
+				mutex.RLock()
+				for k := range cache {
+					fmt.Printf("%s: %d bytes\n", k, len(cache[k].body))
+				}
+				mutex.RUnlock()
 				fmt.Print(color.Reset)
 			} else if length == 0 {
 				fmt.Println(color.Ize(color.Yellow, "Cache is Empty"))
