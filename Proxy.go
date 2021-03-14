@@ -32,6 +32,10 @@ var cache = map[string]*website{} // Cache is a map of the URL's as the keys and
 var webTimes = make(map[string]time.Duration, 0)
 var cachetimes = make(map[string]time.Duration, 0)
 
+// add2Blacklist
+// Changes response into a website struct
+// Arguments: HTTP Response and Response of the Site
+// Returns: Website Struct
 func newSite(res *http.Response, siteResponse []byte) *website {
 	site := website{headers: make(map[string]string, 0), body: siteResponse}
 	site.timeFetched = time.Now()
@@ -43,6 +47,10 @@ func newSite(res *http.Response, siteResponse []byte) *website {
 	return &site
 }
 
+// add2Blacklist
+// Adds given URL to the blacklist
+// Arguments: URL of Site
+// Returns: void
 func add2Blacklist(site string) {
 	_, blocked := blacklist[site]
 	if !blocked {
@@ -53,6 +61,10 @@ func add2Blacklist(site string) {
 	}
 }
 
+// RmvFromBlacklist
+// Removes given site from the blacklist
+// Arguments: URL of Site
+// Returns: void
 func RmvFromBlacklist(site string) {
 	_, blocked := blacklist[site]
 	if !blocked {
@@ -81,6 +93,10 @@ func blacklisted(site string) bool {
 	return blocked
 }
 
+// cached
+// Checks if the given site is in the cache
+// Arguments: URL string
+// Returns: boolean
 func cached(site string) bool {
 	mutex.RLock()
 	website, x := cache[site]
@@ -95,11 +111,13 @@ func cached(site string) bool {
 	}
 }
 
+// userInput
+// Loops and observes user input in to the CLI
 func userInput() {
 	Scanner := bufio.NewReader(os.Stdin)
-	fmt.Println(color.Ize(color.Cyan, "|-------------------------------|"))
-	fmt.Println(color.Ize(color.Cyan, "| Dans Web Proxy Console Bro ;) |"))
-	fmt.Println(color.Ize(color.Cyan, "|-------------------------------|"))
+	fmt.Println(color.Ize(color.Cyan, "|-------------------|"))
+	fmt.Println(color.Ize(color.Cyan, "| Web Proxy Console |"))
+	fmt.Println(color.Ize(color.Cyan, "|-------------------|"))
 
 	for 1 < 2 {
 		fmt.Print(color.Ize(color.Blue, ">> "))
@@ -134,7 +152,7 @@ func userInput() {
 					average = average + int64(y)
 				}
 				average = average / int64(len(savedTimeURL))
-				fmt.Print(color.Cyan)
+				fmt.Print(color.Purple)
 				fmt.Printf("Average time saved from caching: %dms\n", average)
 
 				fmt.Println("\nCached sites:")
@@ -151,6 +169,10 @@ func userInput() {
 	}
 }
 
+// HTTPHandler
+// Will handle all HTTP requests made through the proxy and send to the client
+// Arguments: Response Writer and HTTP Request
+// Returns: void
 func HTTPHandler(writer http.ResponseWriter, request *http.Request) {
 	client := &http.Client{}
 	res, e := client.Do(request)
@@ -178,12 +200,20 @@ func HTTPHandler(writer http.ResponseWriter, request *http.Request) {
 	res.Body.Close()
 }
 
+// copyTCP
+// Copies the data recieved via the TCP link to the requested server to the Proxy Client
+// Arguments: Client TCP Connection and Web TCP Connection
+// Returns: void
 func copyTCP(client *net.TCPConn, conn *net.TCPConn) {
 	io.Copy(client, conn)
 	client.Close()
 	conn.Close()
 }
 
+// HTTPSHandler
+// Will handle all HTTPS requests made through the proxy and send to the client
+// Arguments: Response Writer and HTTPS Request
+// Returns: void
 func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 	time := time.Second * 10
 	dest, e := net.DialTimeout("tcp", request.Host, time)
@@ -217,6 +247,10 @@ func HTTPSHandler(writer http.ResponseWriter, request *http.Request) {
 
 }
 
+// mainHandler
+// Will handle all requests through the server and will use the proper handler for each request
+// Arguments: Response Writer and HTTP Request
+// Returns: void
 func mainHandler(writer http.ResponseWriter, request *http.Request) {
 	request.RequestURI = ""
 	url := request.URL.String()
@@ -224,6 +258,7 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 
 	if !blacklisted(host) {
 		log.Print(color.Ize(color.Green, "ALLOWED"))
+		fmt.Print(color.Ize(color.Blue, ">> "))
 		cached := cached(url)
 		timer := time.Now()
 		if http.MethodConnect == request.Method {
@@ -246,19 +281,24 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 			cachetimes[url] = fin
 			fmt.Print(color.Cyan)
 			log.Printf("Taken from cache: %dms", fin.Milliseconds())
+			fmt.Print(color.Ize(color.Blue, ">> "))
 			fmt.Print(color.Reset)
 		} else {
 			webTimes[url] = fin
 			fmt.Print(color.Yellow)
 			log.Printf("Taken from web: %dms", fin.Milliseconds())
+			fmt.Print(color.Ize(color.Blue, ">> "))
 			fmt.Print(color.Reset)
 		}
 	} else {
 		log.Println(color.Ize(color.Red, "This Site is BLOCKED!"))
+		fmt.Print(color.Ize(color.Blue, ">> "))
 		writer.WriteHeader(http.StatusForbidden)
 	}
 }
 
+// cacheCleaner
+// Will clean out old sites from the cache
 func cacheCleaner() {
 	for 1 < 2 {
 		mutex.RLock()
