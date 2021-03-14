@@ -291,7 +291,9 @@ func mainHandler(writer http.ResponseWriter, request *http.Request) {
 			fmt.Print(color.Reset)
 		}
 	} else {
-		log.Println(color.Ize(color.Red, "This Site is BLOCKED!"))
+		print(color.Red)
+		log.Println("This Site is BLOCKED!")
+		print(color.Reset)
 		fmt.Print(color.Ize(color.Blue, ">> "))
 		writer.WriteHeader(http.StatusForbidden)
 	}
